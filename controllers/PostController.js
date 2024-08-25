@@ -1,5 +1,26 @@
 import PostModel from '../models/Post.js'
 
+export const getLastTags = async (req, res) => {
+	try {
+		const posts = await PostModel.find().limit(5).exec()
+
+		const tags = posts
+			.map(obj => obj.tags)
+			.flat()
+			.slice(0, 5)
+
+		const uniqTags = new Set(tags)
+		const arrayTags = Array.from(uniqTags)
+
+		res.json(arrayTags)
+	} catch (error) {
+		console.log(error)
+		res.status(500).json({
+			message: 'Не удалось получить теги',
+		})
+	}
+}
+
 export const getAll = async (req, res) => {
 	try {
 		const posts = await PostModel.find().populate({
@@ -20,11 +41,9 @@ export const getOne = async (req, res) => {
 	try {
 		const postId = req.params.id
 
-		PostModel.findOneAndUpdate(
-			{ _id: postId },
-			{ $inc: { viewsCount: 1 } },
-			{ returnDocument: 'After' }
-		).then(doc => res.json(doc))
+		PostModel.findOneAndUpdate({ _id: postId }, { $inc: { viewsCount: 1 } }, { returnDocument: 'After' }).then(doc =>
+			res.json(doc)
+		)
 	} catch (error) {
 		console.log(error)
 		return res.status(500).json({
@@ -105,9 +124,7 @@ export const update = async (req, res) => {
 			return res.status(404).json({ message: 'Статья не найдена' })
 		}
 		if (post.user.toString() !== userId) {
-			return res
-				.status(403)
-				.json({ message: 'Нет доступа к редактированию статьи' })
+			return res.status(403).json({ message: 'Нет доступа к редактированию статьи' })
 		}
 
 		await PostModel.updateOne(
