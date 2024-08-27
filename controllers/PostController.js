@@ -6,6 +6,7 @@ export const getLastTags = async (req, res) => {
 
 		const tags = posts
 			.map(obj => obj.tags)
+			.reverse()
 			.flat()
 			.slice(0, 5)
 
@@ -27,7 +28,7 @@ export const getAll = async (req, res) => {
 			path: 'user',
 			select: ['fullName', 'avatarUrl'],
 		})
-
+		posts.reverse()
 		res.json(posts)
 	} catch (error) {
 		console.log(error)
@@ -41,9 +42,19 @@ export const getOne = async (req, res) => {
 	try {
 		const postId = req.params.id
 
-		PostModel.findOneAndUpdate({ _id: postId }, { $inc: { viewsCount: 1 } }, { returnDocument: 'After' }).then(doc =>
-			res.json(doc)
+		PostModel.findOneAndUpdate(
+			{
+				_id: postId,
+			},
+			{
+				$inc: { viewsCount: 1 },
+			},
+			{
+				returnDocument: 'after',
+			}
 		)
+			.populate('user')
+			.then(doc => res.json(doc))
 	} catch (error) {
 		console.log(error)
 		return res.status(500).json({
